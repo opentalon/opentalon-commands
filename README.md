@@ -1,5 +1,7 @@
 # opentalon-commands
 
+[![CI](https://github.com/opentalon/opentalon-commands/actions/workflows/ci.yml/badge.svg)](https://github.com/opentalon/opentalon-commands/actions/workflows/ci.yml)
+
 Content preparer plugin that parses slash commands and returns `invoke` or `message` for the core. The core runs the built-in **opentalon** plugin to execute actions.
 
 **Repository:** [github.com/opentalon/opentalon-commands](https://github.com/opentalon/opentalon-commands)

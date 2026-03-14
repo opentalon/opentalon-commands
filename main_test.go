@@ -114,6 +114,16 @@ func TestCommandsHandler_Execute(t *testing.T) {
 	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/new"}})
 	assertPreparerInvoke(t, resp, "clear_session", nil)
 
+	// /reload mcp
+	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/reload mcp"}})
+	assertPreparerInvoke(t, resp, "reload_mcp", map[string]string{"server": ""})
+
+	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/reload mcp myserver"}})
+	assertPreparerInvoke(t, resp, "reload_mcp", map[string]string{"server": "myserver"})
+
+	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/reload other"}})
+	assertPreparerMessage(t, resp, "Usage: /reload mcp")
+
 	// Unknown command
 	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/unknown"}})
 	assertPreparerMessage(t, resp, "Unknown command: /unknown")

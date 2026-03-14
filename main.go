@@ -18,6 +18,7 @@ const (
 	actionListCommands = "list_commands"
 	actionSetPrompt    = "set_prompt"
 	actionClearSession = "clear_session"
+	actionReloadMCP    = "reload_mcp"
 )
 
 // preparerResponse is the JSON shape returned when the message is a command (send_to_llm: false).
@@ -45,7 +46,7 @@ type commandsHandler struct{}
 func (commandsHandler) Capabilities() plugin.CapabilitiesMsg {
 	return plugin.CapabilitiesMsg{
 		Name:        pluginName,
-		Description: "Parses slash commands (/install, /show config, /commands, /set prompt, /clear) and returns invoke or message for the core.",
+		Description: "Parses slash commands (/install, /show config, /commands, /set prompt, /clear, /reload mcp) and returns invoke or message for the core.",
 		Actions: []plugin.ActionMsg{
 			{Name: actionPrepare, Description: "Parse user message; if it starts with /, return send_to_llm: false and invoke or message.", Parameters: []plugin.ParameterMsg{{Name: argKeyText, Description: "User message content", Type: "string", Required: true}}},
 		},
@@ -96,6 +97,15 @@ func (commandsHandler) Execute(req plugin.Request) plugin.Response {
 		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "", []invokeStep{{Plugin: opentalonPlugin, Action: actionSetPrompt, Args: map[string]string{"text": promptText}}})}
 	case "clear", "new":
 		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "", []invokeStep{{Plugin: opentalonPlugin, Action: actionClearSession, Args: map[string]string{}}})}
+	case "reload":
+		// /reload mcp [server]
+		rest = strings.TrimSpace(rest)
+		sub, server := parseCommand("/" + rest)
+		if sub != "mcp" {
+			return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "Usage: /reload mcp [server]", nil)}
+		}
+		args := map[string]string{"server": strings.TrimSpace(server)}
+		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "", []invokeStep{{Plugin: opentalonPlugin, Action: actionReloadMCP, Args: args}})}
 	case "":
 		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "Unknown command. Try /commands.", nil)}
 	default:

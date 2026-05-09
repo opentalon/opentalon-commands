@@ -124,6 +124,20 @@ func TestCommandsHandler_Execute(t *testing.T) {
 	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/reload other"}})
 	assertPreparerMessage(t, resp, "Usage: /reload mcp")
 
+	// /debug — bare invocation passes no mode (core defaults to toggle)
+	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/debug"}})
+	assertPreparerInvoke(t, resp, "set_debug_mode", map[string]string{})
+
+	// /debug on/off/status all pass through as mode arg
+	for _, m := range []string{"on", "off", "status", "toggle"} {
+		resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/debug " + m}})
+		assertPreparerInvoke(t, resp, "set_debug_mode", map[string]string{"mode": m})
+	}
+
+	// Mode is lowercased so user-typed /Debug ON still hits the core action
+	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/debug ON"}})
+	assertPreparerInvoke(t, resp, "set_debug_mode", map[string]string{"mode": "on"})
+
 	// Unknown command
 	resp = h.Execute(plugin.Request{ID: "1", Action: actionPrepare, Args: map[string]string{"text": "/unknown"}})
 	assertPreparerMessage(t, resp, "Unknown command: /unknown")

@@ -9,16 +9,17 @@ import (
 )
 
 const (
-	pluginName        = "opentalon-commands"
-	actionPrepare     = "prepare"
-	argKeyText        = "text"
-	opentalonPlugin   = "opentalon"
+	pluginName         = "opentalon-commands"
+	actionPrepare      = "prepare"
+	argKeyText         = "text"
+	opentalonPlugin    = "opentalon"
 	actionInstallSkill = "install_skill"
 	actionShowConfig   = "show_config"
 	actionListCommands = "list_commands"
 	actionSetPrompt    = "set_prompt"
 	actionClearSession = "clear_session"
 	actionReloadMCP    = "reload_mcp"
+	actionSetDebugMode = "set_debug_mode"
 )
 
 // preparerResponse is the JSON shape returned when the message is a command (send_to_llm: false).
@@ -46,7 +47,7 @@ type commandsHandler struct{}
 func (commandsHandler) Capabilities() plugin.CapabilitiesMsg {
 	return plugin.CapabilitiesMsg{
 		Name:        pluginName,
-		Description: "Parses slash commands (/install, /show config, /commands, /set prompt, /clear, /reload mcp) and returns invoke or message for the core.",
+		Description: "Parses slash commands (/install, /show config, /commands, /set prompt, /clear, /reload mcp, /debug) and returns invoke or message for the core.",
 		Actions: []plugin.ActionMsg{
 			{Name: actionPrepare, Description: "Parse user message; if it starts with /, return send_to_llm: false and invoke or message.", Parameters: []plugin.ParameterMsg{{Name: argKeyText, Description: "User message content", Type: "string", Required: true}}},
 		},
@@ -106,6 +107,17 @@ func (commandsHandler) Execute(req plugin.Request) plugin.Response {
 		}
 		args := map[string]string{"server": strings.TrimSpace(server)}
 		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "", []invokeStep{{Plugin: opentalonPlugin, Action: actionReloadMCP, Args: args}})}
+	case "debug":
+		// /debug [on|off|status|toggle]
+		// Mode arg is optional — empty defaults to toggle on the core side.
+		// session_id is auto-injected by the orchestrator (InjectContextArgs
+		// on the action), so we don't pass it from here.
+		mode := strings.ToLower(strings.TrimSpace(rest))
+		args := map[string]string{}
+		if mode != "" {
+			args["mode"] = mode
+		}
+		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "", []invokeStep{{Plugin: opentalonPlugin, Action: actionSetDebugMode, Args: args}})}
 	case "":
 		return plugin.Response{CallID: req.ID, Content: preparerJSON(false, "Unknown command. Try /commands.", nil)}
 	default:

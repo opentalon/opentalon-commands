@@ -2,7 +2,7 @@ module github.com/opentalon/opentalon-commands
 
 go 1.25
 
-require github.com/opentalon/opentalon v0.0.13
+require github.com/opentalon/opentalon v0.0.17
 
 require (
 	golang.org/x/net v0.43.0 // indirect
